@@ -12,6 +12,12 @@ keywords = ["solana", "deploy", "cli", "defi", "lending"]
 categories = ["command-line-utilities", "cryptography::cryptocurrencies"]
 rust-version = "1.75"
 
+[package.metadata.wix]
+upgrade-guid = "82AAA26F-A6F7-4936-B3F3-29DD16F7EA7A"
+path-guid = "C435145C-85CB-4314-BC30-1AC1F9BDE4F9"
+license = false
+eula = false
+
 [[bin]]
 name = "solignition"
 path = "src/main.rs"
@@ -50,3 +56,8 @@ strip = true
 lto = "thin"
 codegen-units = 1
 panic = "abort"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
