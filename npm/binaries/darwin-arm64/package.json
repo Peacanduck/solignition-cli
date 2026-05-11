@@ -1,0 +1,14 @@
+{
+  "name": "@solignition/cli-darwin-arm64",
+  "version": "1.0.0",
+  "description": "Prebuilt solignition CLI binary for macOS arm64 (Apple Silicon)",
+  "license": "MIT",
+  "homepage": "https://github.com/ORG/solignition-cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ORG/solignition-cli.git"
+  },
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "files": ["bin/"]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "solignition",
+  "version": "1.0.0",
+  "description": "Deploy Solana programs without upfront capital via the Solignition lending protocol",
+  "license": "MIT",
+  "homepage": "https://www.solignition.xyz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Peacanduck/solignition-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Peacanduck/solignition-cli/issues"
+  },
+  "keywords": ["solana", "deploy", "cli", "defi", "lending"],
+  "bin": {
+    "solignition": "bin.js"
+  },
+  "files": ["bin.js", "README.md"],
+  "engines": {
+    "node": ">=16"
+  },
+  "optionalDependencies": {
+    "@solignition/cli-linux-x64": "1.0.0",
+    "@solignition/cli-linux-arm64": "1.0.0",
+    "@solignition/cli-darwin-x64": "1.0.0",
+    "@solignition/cli-darwin-arm64": "1.0.0",
+    "@solignition/cli-win32-x64": "1.0.0"
+  }
+}

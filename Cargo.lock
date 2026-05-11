@@ -5448,7 +5448,7 @@ dependencies = [
 
 [[package]]
 name = "solignition-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "bs58",
@@ -5463,6 +5463,7 @@ dependencies = [
  "serde_json",
  "solana-client",
  "solana-sdk",
+ "solana-system-interface",
  "tokio",
  "toml 0.8.23",
 ]

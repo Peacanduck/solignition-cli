@@ -6,9 +6,9 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::Keypair,
     signer::Signer,
-    system_program,
     transaction::Transaction,
 };
+use solana_system_interface::program as system_program;
 use std::str::FromStr;
 
 use crate::config::Config;
@@ -25,6 +25,13 @@ const EVENT_AUTHORITY_SEED: &[u8] = b"__event_authority";
 
 const REQUEST_LOAN_DISC: [u8; 8] = [120, 2, 7, 7, 1, 219, 235, 187];
 const REPAY_LOAN_DISC: [u8; 8] = [224, 93, 144, 77, 61, 17, 137, 54];
+
+// ─── Network Identification ──────────────────────────────────────────────────
+
+/// Solana mainnet-beta cluster genesis hash. Used to detect when the user's
+/// configured RPC points to mainnet so we can gate signing actions behind an
+/// extra confirmation. Same value the official Solana CLI uses.
+const MAINNET_GENESIS_HASH: &str = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
 
 // ─── Account Layout Constants ────────────────────────────────────────────────
 
@@ -79,6 +86,9 @@ pub struct ProtocolConfigInfo {
     pub is_paused: bool,
 }
 
+// Some fields here aren't read on every code path today but are retained for
+// future commands, Debug output, and parity with the on-chain account layout.
+#[allow(dead_code)]
 pub struct LoanInfo {
     pub loan_id: u64,
     pub borrower: Pubkey,
@@ -140,6 +150,18 @@ impl SolanaClient {
     pub async fn get_balance(&self, pubkey: &Pubkey) -> Result<f64> {
         let balance = self.rpc.get_balance(pubkey)?;
         Ok(balance as f64 / 1_000_000_000.0)
+    }
+
+    /// Returns true when the configured RPC points to Solana mainnet-beta.
+    /// Compares the cluster's genesis hash against the canonical mainnet
+    /// hash — works regardless of which RPC provider (Helius, QuickNode,
+    /// Triton, vanity domains) the user is pointing at.
+    pub async fn is_mainnet(&self) -> Result<bool> {
+        let hash = self
+            .rpc
+            .get_genesis_hash()
+            .context("Failed to fetch genesis hash")?;
+        Ok(hash.to_string() == MAINNET_GENESIS_HASH)
     }
 
     // ─── PDA Derivations ─────────────────────────────────────────────────────
@@ -329,7 +351,7 @@ impl SolanaClient {
             AccountMeta::new(vault_pda, false),            // vault (writable)
             AccountMeta::new(admin_pda, false),            // adminPda (writable)
             AccountMeta::new(deployer_pubkey, false),      // deployer (writable)
-            AccountMeta::new_readonly(system_program::id(), false), // systemProgram
+            AccountMeta::new_readonly(system_program::ID, false), // systemProgram
             AccountMeta::new_readonly(event_authority, false), // eventAuthority
             AccountMeta::new_readonly(self.program_id, false), // program
         ];
@@ -375,7 +397,7 @@ impl SolanaClient {
             AccountMeta::new(config_pda, false),            // protocolConfig (writable)
             AccountMeta::new(vault_pda, false),             // vault (writable)
             AccountMeta::new(admin_pda, false),             // adminPda (writable)
-            AccountMeta::new_readonly(system_program::id(), false), // systemProgram
+            AccountMeta::new_readonly(system_program::ID, false), // systemProgram
             AccountMeta::new_readonly(event_authority, false), // eventAuthority
             AccountMeta::new_readonly(self.program_id, false), // program
         ];
