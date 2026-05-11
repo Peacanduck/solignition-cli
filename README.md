@@ -215,12 +215,7 @@ solignition --api-url https://api.example.com --rpc-url https://rpc.example.com 
 ## Networks
 
 - **Default: Devnet.** Safe for first-time use and program testing.
-- **Mainnet-beta:** override with `--rpc-url https://api.mainnet-beta.solana.com` (or the URL of your mainnet RPC provider — Helius, QuickNode, Triton, etc.). The CLI detects mainnet via genesis hash and inserts an extra confirmation prompt before any signing action. `--yes` skips it for automation.
-- **Localnet:** override with `--rpc-url http://127.0.0.1:8899`.
-
-## Self-hosting the deployer
-
-The CLI talks to the Solignition deployer service over HTTP. To run your own, see the deployer repo (sibling directory `../deployer` in the Solignition monorepo) — it ships as a Node/TypeScript service that handles uploads, on-chain deployment, repayment-driven authority transfer, and expired-loan recovery.
+- **Mainnet-beta:** TBA override with `--rpc-url https://api.mainnet-beta.solana.com` (or the URL of your mainnet RPC provider — Helius, QuickNode, Triton, etc.). The CLI detects mainnet via genesis hash and inserts an extra confirmation prompt before any signing action. `--yes` skips it for automation.
 
 ## License
 
