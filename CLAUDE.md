@@ -185,7 +185,7 @@ CLI flags > Environment variables > Config file (`~/.solignition/config.toml`) >
 
 | Setting    | Env Var                  | CLI Flag       | Default                                          | 
 |------------|--------------------------|----------------|--------------------------------------------------|
-| API URL    | `SOLIGNITION_API_URL`    | `--api-url`    | `http://localhost:3000`                          | 
+| API URL    | `SOLIGNITION_API_URL`    | `--api-url`    | `https://api.solignition.ngrok.app`                          | 
 | RPC URL    | `SOLANA_RPC_URL`         | `--rpc-url`    | `https://api.devnet.solana.com`                  |
 | Keypair    | `SOLIGNITION_KEYPAIR`    | `--keypair`    | `~/.config/solana/id.json`                       |
 | Program ID | `SOLIGNITION_PROGRAM_ID` | `--program-id` | `HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63`   |

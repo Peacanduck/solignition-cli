@@ -17,7 +17,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            api_url: "http://localhost:3000".into(),
+            api_url: "https://api.solignition.ngrok.app".into(),
             rpc_url: "https://api.devnet.solana.com".into(),
             keypair_path: None,
             program_id: "HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63".into(),

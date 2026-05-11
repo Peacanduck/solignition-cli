@@ -160,13 +160,13 @@ Fetch and display on-chain protocol configuration (fees, rates, counters).
 Configuration is stored at `~/.solignition/config.toml`:
 
 ```toml
-api_url = "http://localhost:3000"
+api_url = "https://api.solignition.ngrok.app"
 rpc_url = "https://api.devnet.solana.com"
 keypair_path = "/home/user/.config/solana/id.json"
 program_id = "HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63"
 ```
 
-> **`api_url` must be set before deploying.** The default points at `localhost:3000` for development. Run `solignition init` and supply the deployer service URL you're using (or [self-host one](#self-hosting-the-deployer)).
+> **`api_url` must be set before deploying.** The default points at `https://api.solignition.ngrok.app` for development. Run `solignition init` to change it currently there is no need to change the default until mainnet. 
 
 ### Environment Variables
 
