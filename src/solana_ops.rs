@@ -93,6 +93,30 @@ pub struct LoanInfo {
     pub total_repayment: u64,
 }
 
+impl LoanInfo {
+    /// True when the loan is on-chain `active` but past its due date,
+    /// evaluated against the **chain's** Unix timestamp (Clock sysvar).
+    /// Wall-clock time can drift from the chain on localnet, which is
+    /// why the caller passes in `now_ts` from `fetch_chain_timestamp`.
+    pub fn is_expired_at(&self, now_ts: i64) -> bool {
+        self.state == "active"
+            && self.start_ts > 0
+            && now_ts > self.start_ts.saturating_add(self.duration)
+    }
+
+    /// State to render in the UI: `"expired"` when active+past-due,
+    /// otherwise the raw on-chain state. The raw `state` field stays
+    /// untouched so checks like `cmd_repay`'s `state == "active"`
+    /// gate keep working.
+    pub fn display_state_at(&self, now_ts: i64) -> &str {
+        if self.is_expired_at(now_ts) {
+            "expired"
+        } else {
+            self.state.as_str()
+        }
+    }
+}
+
 // ─── Client ──────────────────────────────────────────────────────────────────
 
 pub struct SolanaClient {
@@ -241,6 +265,29 @@ impl SolanaClient {
             interest_amount,
             total_repayment,
         })
+    }
+
+    /// Fetch the chain's Unix timestamp from the Clock sysvar — this is
+    /// the same time source that on-chain programs see via
+    /// `Clock::unix_timestamp`, and it's what `Loan.startTs` was stamped
+    /// against. On localnet this can lag wall-clock by minutes, so any
+    /// expiry comparison against `startTs` must use this value, not
+    /// `chrono::Utc::now()`.
+    pub async fn fetch_chain_timestamp(&self) -> Result<i64> {
+        use solana_sdk::sysvar::clock;
+        let account = self
+            .rpc
+            .get_account(&clock::ID)
+            .context("Failed to fetch Clock sysvar")?;
+        // Clock layout (Borsh, no discriminator): slot(u64) +
+        // epochStartTimestamp(i64) + epoch(u64) + leaderScheduleEpoch(u64)
+        // + unixTimestamp(i64). unixTimestamp lives at offset 32.
+        let unix_ts = i64::from_le_bytes(
+            account.data[32..40]
+                .try_into()
+                .context("Clock sysvar account shorter than expected")?,
+        );
+        Ok(unix_ts)
     }
 
     // ─── Transactions ────────────────────────────────────────────────────────

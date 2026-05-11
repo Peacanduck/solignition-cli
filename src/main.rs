@@ -6,7 +6,10 @@ mod solana_ops;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use colored::Colorize;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Parser)]
 #[command(
@@ -516,12 +519,33 @@ async fn cmd_repay(cfg: &config::Config, loan_id: u64, skip_confirm: bool) -> Re
 
 async fn cmd_status(cfg: &config::Config, loan_id: u64) -> Result<()> {
     let api = client::DeployerClient::new(&cfg.api_url);
+    let sol_client = solana_ops::SolanaClient::new(cfg)?;
 
     let spinner = display::spinner("Fetching deployment status...");
     let deployment = api.get_deployment(&loan_id.to_string()).await?;
+
+    // Use the chain's Clock — `Loan.startTs` was stamped against it, and
+    // wall-clock can drift on localnet. Fall back to wall-clock only if
+    // the sysvar fetch itself fails (offline / RPC issue).
+    let now_ts = sol_client
+        .fetch_chain_timestamp()
+        .await
+        .unwrap_or_else(|_| chrono::Utc::now().timestamp());
+
+    // Best-effort on-chain state fetch. The loan PDA may be closed (e.g.
+    // after full reclamation) — in that case fetch_loan errors and we show
+    // "—" rather than failing the whole command.
+    let onchain_state = match Pubkey::from_str(&deployment.borrower) {
+        Ok(borrower) => sol_client
+            .fetch_loan(loan_id, &borrower)
+            .await
+            .ok()
+            .map(|l| l.display_state_at(now_ts).to_string()),
+        Err(_) => None,
+    };
     spinner.finish_and_clear();
 
-    display::print_deployment_status(&deployment);
+    display::print_deployment_status(&deployment, onchain_state.as_deref());
 
     Ok(())
 }
@@ -550,6 +574,7 @@ async fn cmd_uploads(cfg: &config::Config) -> Result<()> {
 async fn cmd_loans(cfg: &config::Config) -> Result<()> {
     let wallet = config::load_keypair(cfg)?;
     let api = client::DeployerClient::new(&cfg.api_url);
+    let sol_client = solana_ops::SolanaClient::new(cfg)?;
 
     let spinner = display::spinner("Fetching deployments...");
     let deployments = api
@@ -562,7 +587,30 @@ async fn cmd_loans(cfg: &config::Config) -> Result<()> {
         return Ok(());
     }
 
-    display::print_loans_table(&deployments);
+    // Fetch on-chain loan state for each deployment. Best-effort: a closed
+    // loan PDA simply yields None and renders as "—" in the table. The
+    // chain timestamp is fetched once and reused across all rows to keep
+    // expiry decisions consistent and avoid N extra sysvar RPCs.
+    let spinner = display::spinner("Fetching on-chain loan states...");
+    let now_ts = sol_client
+        .fetch_chain_timestamp()
+        .await
+        .unwrap_or_else(|_| chrono::Utc::now().timestamp());
+    let mut onchain_states: Vec<Option<String>> = Vec::with_capacity(deployments.len());
+    for d in &deployments {
+        let state = match (d.loan_id.parse::<u64>(), Pubkey::from_str(&d.borrower)) {
+            (Ok(lid), Ok(b)) => sol_client
+                .fetch_loan(lid, &b)
+                .await
+                .ok()
+                .map(|l| l.display_state_at(now_ts).to_string()),
+            _ => None,
+        };
+        onchain_states.push(state);
+    }
+    spinner.finish_and_clear();
+
+    display::print_loans_table(&deployments, &onchain_states);
     Ok(())
 }
 

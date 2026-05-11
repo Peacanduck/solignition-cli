@@ -96,6 +96,10 @@ fn status_colored(status: &str) -> colored::ColoredString {
         "repaid" => status.cyan().bold(),
         "repaidPendingTransfer" => "repaid (pending transfer)".yellow(),
         "reclaimed" => status.red(),
+        // Active on-chain but past due — deployer sweep (~30m cadence)
+        // hasn't yet marked it recovered. Bold yellow distinguishes it
+        // from plain "pending" / "deploying".
+        "expired" => status.yellow().bold(),
         _ => status.normal(),
     }
 }
@@ -122,11 +126,17 @@ pub fn print_config(cfg: &Config) {
 
 // ─── Deployment Status ───────────────────────────────────────────────────────
 
-pub fn print_deployment_status(d: &DeploymentInfo) {
+pub fn print_deployment_status(d: &DeploymentInfo, onchain_state: Option<&str>) {
     println!("{}", "📋 Deployment Status".bold().cyan());
     println!("  ─────────────────────────────────────────");
     println!("  Loan ID:      {}", d.loan_id.yellow().bold());
     println!("  Status:       {}", status_colored(&d.status));
+    println!(
+        "  On-chain:     {}",
+        onchain_state
+            .map(status_colored)
+            .unwrap_or_else(|| "—".dimmed())
+    );
     println!("  Borrower:     {}", short_pubkey(&d.borrower).dimmed());
 
     if let Some(pid) = &d.program_id {
@@ -199,28 +209,38 @@ pub fn print_uploads_table(uploads: &[FileUploadInfo]) {
     println!();
 }
 
-pub fn print_loans_table(deployments: &[DeploymentInfo]) {
+pub fn print_loans_table(deployments: &[DeploymentInfo], onchain_states: &[Option<String>]) {
     println!("{}", "🔧 Your Deployments".bold().cyan());
     println!();
     println!(
-        "  {:<8} {:<12} {:<46} {:<12}",
+        "  {:<8} {:<12} {:<22} {:<46} {:<12}",
         "LOAN ID".bold(),
         "STATUS".bold(),
+        "ON-CHAIN".bold(),
         "PROGRAM ID".bold(),
         "UPDATED".bold(),
     );
-    println!("  {}", "─".repeat(80));
+    println!("  {}", "─".repeat(102));
 
-    for d in deployments {
+    for (i, d) in deployments.iter().enumerate() {
         let pid = d
             .program_id
             .as_deref()
             .unwrap_or("—");
 
+        let onchain = onchain_states
+            .get(i)
+            .and_then(|s| s.as_deref());
+        let onchain_cell = match onchain {
+            Some(s) => status_colored(s),
+            None => "—".dimmed(),
+        };
+
         println!(
-            "  {:<8} {:<22} {:<46} {:<12}",
+            "  {:<8} {:<22} {:<32} {:<46} {:<12}",
             d.loan_id,
             status_colored(&d.status),
+            onchain_cell,
             if pid == "—" { pid.dimmed().to_string() } else { pid.to_string() },
             format_timestamp(d.updated_at),
         );

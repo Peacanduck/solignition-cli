@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use reqwest::multipart;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::path::Path;
 
 // ─── Response Types ──────────────────────────────────────────────────────────

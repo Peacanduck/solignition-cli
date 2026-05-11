@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
 use std::path::PathBuf;
 
 const CONFIG_DIR: &str = ".solignition";
@@ -21,7 +20,7 @@ impl Default for Config {
             api_url: "http://localhost:3000".into(),
             rpc_url: "http://127.0.0.1:8899".into(),
             keypair_path: None,
-            program_id: "Dz4Zey62uraTxX9V9HBXpCfuFtNzdt5ULNQ1yZXh6Peh".into(),
+            program_id: "HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63".into(),
         }
     }
 }
