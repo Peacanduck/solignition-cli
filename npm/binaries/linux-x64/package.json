@@ -1,0 +1,14 @@
+{
+  "name": "@solignition/cli-linux-x64",
+  "version": "1.0.0",
+  "description": "Prebuilt solignition CLI binary for Linux x64",
+  "license": "MIT",
+  "homepage": "https://github.com/ORG/solignition-cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ORG/solignition-cli.git"
+  },
+  "os": ["linux"],
+  "cpu": ["x64"],
+  "files": ["bin/"]
+}

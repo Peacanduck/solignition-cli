@@ -18,7 +18,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             api_url: "http://localhost:3000".into(),
-            rpc_url: "http://127.0.0.1:8899".into(),
+            rpc_url: "https://api.devnet.solana.com".into(),
             keypair_path: None,
             program_id: "HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63".into(),
         }
@@ -74,5 +74,5 @@ pub fn load_keypair(cfg: &Config) -> Result<Keypair> {
     let bytes: Vec<u8> = serde_json::from_str(&data)
         .with_context(|| format!("Invalid keypair JSON at: {}", path.display()))?;
 
-    Keypair::from_bytes(&bytes).context("Invalid keypair bytes")
+    Keypair::try_from(&bytes[..]).context("Invalid keypair bytes")
 }

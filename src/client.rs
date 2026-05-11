@@ -1,3 +1,8 @@
+// Response structs intentionally expose every field returned by the deployer
+// service for forward compatibility and Debug output, even when not all
+// fields are read by the CLI today.
+#![allow(dead_code)]
+
 use anyhow::{Context, Result};
 use reqwest::multipart;
 use serde::Deserialize;

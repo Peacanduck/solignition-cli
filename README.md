@@ -12,23 +12,38 @@ Solignition lets you deploy Solana programs by taking a short-term loan to cover
 
 ## Installation
 
+Pick whichever channel fits your workflow.
+
+### crates.io (Rust)
+
+```bash
+cargo install solignition-cli
+```
+
+### npm / yarn
+
+```bash
+npm install -g solignition
+# or
+yarn global add solignition
+```
+
+The npm package ships precompiled binaries for Linux (x64 / arm64), macOS (x64 / arm64), and Windows (x64) — no Rust toolchain required.
+
+### Prebuilt binaries
+
+Grab the archive for your platform from the [latest GitHub Release](https://github.com/ORG/solignition-cli/releases/latest), extract, and put `solignition` on your `PATH`.
+
 ### From source
 
 ```bash
-# Clone the repo
-git clone https://github.com/plebsolutions/solignition.git
-cd solignition/cli
-
-# Build
+git clone https://github.com/ORG/solignition-cli
+cd solignition-cli
 cargo build --release
-
-# Install globally
-cargo install --path .
+# Binary at target/release/solignition
 ```
 
-The binary will be available as `solignition` in your PATH.
-
-### Prerequisites
+### Prerequisites (source builds only)
 
 - Rust 1.75+ (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
 - Solana CLI tools (for keypair management)
@@ -146,10 +161,12 @@ Configuration is stored at `~/.solignition/config.toml`:
 
 ```toml
 api_url = "http://localhost:3000"
-rpc_url = "http://127.0.0.1:8899"
+rpc_url = "https://api.devnet.solana.com"
 keypair_path = "/home/user/.config/solana/id.json"
-program_id = "Dz4Zey62uraTxX9V9HBXpCfuFtNzdt5ULNQ1yZXh6Peh"
+program_id = "HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63"
 ```
+
+> **`api_url` must be set before deploying.** The default points at `localhost:3000` for development. Run `solignition init` and supply the deployer service URL you're using (or [self-host one](#self-hosting-the-deployer)).
 
 ### Environment Variables
 
@@ -194,6 +211,16 @@ solignition --api-url https://api.example.com --rpc-url https://rpc.example.com 
 | `repaidPendingTransfer` | Repaid, authority being transferred |
 | `recovered` | Loan expired, program recovered |
 | `reclaimed` | SOL reclaimed from recovered program |
+
+## Networks
+
+- **Default: Devnet.** Safe for first-time use and program testing.
+- **Mainnet-beta:** override with `--rpc-url https://api.mainnet-beta.solana.com` (or the URL of your mainnet RPC provider — Helius, QuickNode, Triton, etc.). The CLI detects mainnet via genesis hash and inserts an extra confirmation prompt before any signing action. `--yes` skips it for automation.
+- **Localnet:** override with `--rpc-url http://127.0.0.1:8899`.
+
+## Self-hosting the deployer
+
+The CLI talks to the Solignition deployer service over HTTP. To run your own, see the deployer repo (sibling directory `../deployer` in the Solignition monorepo) — it ships as a Node/TypeScript service that handles uploads, on-chain deployment, repayment-driven authority transfer, and expired-loan recovery.
 
 ## License
 

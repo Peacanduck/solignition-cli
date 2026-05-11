@@ -199,6 +199,44 @@ async fn main() -> Result<()> {
     }
 }
 
+// ─── Shared Helpers ──────────────────────────────────────────────────────────
+
+/// Confirm with the user before performing a real-money action on Solana
+/// mainnet-beta. Returns `Ok(true)` when the user is OK to proceed (either
+/// not on mainnet, or accepted the warning, or passed `--yes`). Returns
+/// `Ok(false)` when the user explicitly cancelled.
+///
+/// We treat a failed genesis-hash lookup as "not mainnet" so users on a
+/// flaky RPC aren't blocked from local/devnet operations; the genuine
+/// risk is silent-mainnet-execution, not silent-devnet-execution.
+async fn confirm_if_mainnet(
+    sol_client: &solana_ops::SolanaClient,
+    skip_confirm: bool,
+) -> Result<bool> {
+    if skip_confirm {
+        return Ok(true);
+    }
+    if !sol_client.is_mainnet().await.unwrap_or(false) {
+        return Ok(true);
+    }
+
+    println!();
+    println!(
+        "{}",
+        "⚠️  MAINNET DETECTED — this transaction will spend real SOL."
+            .red()
+            .bold()
+    );
+    let confirmed = dialoguer::Confirm::new()
+        .with_prompt("Continue on mainnet?")
+        .default(false)
+        .interact()?;
+    if !confirmed {
+        println!("{}", "Cancelled.".dimmed());
+    }
+    Ok(confirmed)
+}
+
 // ─── Command Implementations ─────────────────────────────────────────────────
 
 async fn cmd_init(
@@ -224,7 +262,7 @@ async fn cmd_init(
     } else {
         dialoguer::Input::new()
             .with_prompt("Solana RPC URL")
-            .default("http://127.0.0.1:8899".into())
+            .default("https://api.devnet.solana.com".into())
             .interact_text()?
     };
 
@@ -246,7 +284,7 @@ async fn cmd_init(
     } else {
         dialoguer::Input::new()
             .with_prompt("Solignition Program ID")
-            .default("Dz4Zey62uraTxX9V9HBXpCfuFtNzdt5ULNQ1yZXh6Peh".into())
+            .default("HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63".into())
             .interact_text()?
     };
 
@@ -398,6 +436,11 @@ async fn cmd_deploy(
     );
     println!();
 
+    // Mainnet guard — extra "are you sure" before the normal prompt.
+    if !confirm_if_mainnet(&sol_client, skip_confirm).await? {
+        return Ok(());
+    }
+
     if !skip_confirm {
         let confirmed = dialoguer::Confirm::new()
             .with_prompt("Proceed with deployment?")
@@ -474,6 +517,11 @@ async fn cmd_repay(cfg: &config::Config, loan_id: u64, skip_confirm: bool) -> Re
 
     if loan.state != "active" {
         anyhow::bail!("Loan is not in active state (current: {})", loan.state);
+    }
+
+    // Mainnet guard — extra "are you sure" before the normal prompt.
+    if !confirm_if_mainnet(&sol_client, skip_confirm).await? {
+        return Ok(());
     }
 
     if !skip_confirm {

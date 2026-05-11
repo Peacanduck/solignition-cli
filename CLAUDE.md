@@ -23,7 +23,7 @@ src/
 
 ## On-Chain Program
 
-- **Program ID**: `Dz4Zey62uraTxX9V9HBXpCfuFtNzdt5ULNQ1yZXh6Peh`
+- **Program ID**: `HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63`
 - **Framework**: Anchor 0.31
 - **IDL source**: `../anchor/target/types/solignition.ts` (TypeScript IDL)
 - **IDL JSON**: loaded by the deployer service at runtime
@@ -186,6 +186,6 @@ CLI flags > Environment variables > Config file (`~/.solignition/config.toml`) >
 | Setting    | Env Var                  | CLI Flag       | Default                                          | 
 |------------|--------------------------|----------------|--------------------------------------------------|
 | API URL    | `SOLIGNITION_API_URL`    | `--api-url`    | `http://localhost:3000`                          | 
-| RPC URL    | `SOLANA_RPC_URL`         | `--rpc-url`    | `http://127.0.0.1:8899`                          |
+| RPC URL    | `SOLANA_RPC_URL`         | `--rpc-url`    | `https://api.devnet.solana.com`                  |
 | Keypair    | `SOLIGNITION_KEYPAIR`    | `--keypair`    | `~/.config/solana/id.json`                       |
 | Program ID | `SOLIGNITION_PROGRAM_ID` | `--program-id` | `HVzpjSxwECnb6uY9Jnia48oJp4xrQiz5jgc5hZC5df63`   |
