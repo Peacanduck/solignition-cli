@@ -145,7 +145,7 @@ Fetch and display on-chain protocol configuration (fees, rates, counters).
 Configuration is stored at `~/.solignition/config.toml`:
 
 ```toml
-api_url = "http://localhost:3000"
+api_url = "http"
 rpc_url = "http://127.0.0.1:8899"
 keypair_path = "/home/user/.config/solana/id.json"
 program_id = "Dz4Zey62uraTxX9V9HBXpCfuFtNzdt5ULNQ1yZXh6Peh"

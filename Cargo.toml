@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 description = "CLI tool for deploying Solana programs via the Solignition lending protocol"
 license = "MIT"
+authors = ["Jesse Ely"]
+readme = "README.md"
+repository = "https://www.solignition.xyz/"
 
 [[bin]]
 name = "solignition"
