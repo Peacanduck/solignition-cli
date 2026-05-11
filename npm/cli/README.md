@@ -1,6 +1,6 @@
 # solignition
 
-CLI tool for deploying Solana programs without upfront capital via the [Solignition](https://github.com/ORG/solignition-cli) lending protocol.
+CLI tool for deploying Solana programs without upfront capital via the [Solignition](https://github.com/Peacanduck/solignition-cli) lending protocol.
 
 ```sh
 npm install -g solignition
@@ -13,4 +13,4 @@ This package is a thin wrapper that resolves the appropriate prebuilt binary for
 - `darwin-x64`, `darwin-arm64`
 - `win32-x64`
 
-For full documentation, see the [main README](https://github.com/ORG/solignition-cli).
+For full documentation, see the [main README](https://github.com/Peacanduck/solignition-cli).

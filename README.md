@@ -32,12 +32,12 @@ The npm package ships precompiled binaries for Linux (x64 / arm64), macOS (x64 /
 
 ### Prebuilt binaries
 
-Grab the archive for your platform from the [latest GitHub Release](https://github.com/ORG/solignition-cli/releases/latest), extract, and put `solignition` on your `PATH`.
+Grab the archive for your platform from the [latest GitHub Release](https://github.com/Peacanduck/solignition-cli/releases/latest), extract, and put `solignition` on your `PATH`.
 
 ### From source
 
 ```bash
-git clone https://github.com/ORG/solignition-cli
+git clone https://github.com/Peacanduck/solignition-cli
 cd solignition-cli
 cargo build --release
 # Binary at target/release/solignition
