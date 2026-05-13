@@ -260,7 +260,7 @@ async fn cmd_init(
     } else {
         dialoguer::Input::new()
             .with_prompt("Deployer API URL")
-            .default("http://localhost:3000".into())
+            .default("https://api.solignition.ngrok.app".into())
             .interact_text()?
     };
 
