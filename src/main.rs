@@ -10,6 +10,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::sync::Arc;
 
 #[derive(Parser)]
 #[command(
@@ -149,6 +150,12 @@ async fn main() -> Result<()> {
     }
     if let Some(pid) = &cli.program_id {
         cfg.program_id = pid.clone();
+    }
+
+    // Reject plain HTTP API URLs (outside loopback) before any request goes out.
+    // Skip for `init` and `config` so the user can recover from a bad saved URL.
+    if !matches!(cli.command, Commands::Init { .. } | Commands::Config) {
+        config::validate_api_url(&cfg.api_url)?;
     }
 
     match cli.command {
@@ -319,7 +326,7 @@ async fn cmd_upload(cfg: &config::Config, file: PathBuf) -> Result<()> {
         anyhow::bail!("Only .so files are accepted");
     }
 
-    let wallet = config::load_keypair(cfg)?;
+    let wallet = Arc::new(config::load_keypair(cfg)?);
     let borrower = wallet.pubkey().to_string();
 
     let metadata = std::fs::metadata(&file)?;
@@ -332,7 +339,7 @@ async fn cmd_upload(cfg: &config::Config, file: PathBuf) -> Result<()> {
     println!("  Borrower: {}", borrower.dimmed());
     println!();
 
-    let api = client::DeployerClient::new(&cfg.api_url);
+    let api = client::DeployerClient::new(&cfg.api_url, Arc::clone(&wallet));
     let pb = display::upload_progress_bar(metadata.len());
 
     let resp = api.upload_file(&file, &borrower).await?;
@@ -368,9 +375,9 @@ async fn cmd_deploy(
     admin_fee_bps: Option<u16>,
     skip_confirm: bool,
 ) -> Result<()> {
-    let wallet = config::load_keypair(cfg)?;
+    let wallet = Arc::new(config::load_keypair(cfg)?);
     let borrower = wallet.pubkey().to_string();
-    let api = client::DeployerClient::new(&cfg.api_url);
+    let api = client::DeployerClient::new(&cfg.api_url, Arc::clone(&wallet));
 
     // Step 1: Ensure we have a file_id
     let fid = if let Some(id) = file_id {
@@ -490,7 +497,7 @@ async fn cmd_deploy(
 }
 
 async fn cmd_repay(cfg: &config::Config, loan_id: u64, skip_confirm: bool) -> Result<()> {
-    let wallet = config::load_keypair(cfg)?;
+    let wallet = Arc::new(config::load_keypair(cfg)?);
     let sol_client = solana_ops::SolanaClient::new(cfg)?;
 
     // Fetch loan info
@@ -546,7 +553,7 @@ async fn cmd_repay(cfg: &config::Config, loan_id: u64, skip_confirm: bool) -> Re
 
     // Notify deployer to transfer authority
     let spinner = display::spinner("Requesting program authority transfer...");
-    let api = client::DeployerClient::new(&cfg.api_url);
+    let api = client::DeployerClient::new(&cfg.api_url, Arc::clone(&wallet));
     api.notify_repaid(&signature, &wallet.pubkey().to_string(), loan_id)
         .await?;
     spinner.finish_with_message("✅ Authority transfer initiated");
@@ -566,7 +573,8 @@ async fn cmd_repay(cfg: &config::Config, loan_id: u64, skip_confirm: bool) -> Re
 }
 
 async fn cmd_status(cfg: &config::Config, loan_id: u64) -> Result<()> {
-    let api = client::DeployerClient::new(&cfg.api_url);
+    let wallet = Arc::new(config::load_keypair(cfg)?);
+    let api = client::DeployerClient::new(&cfg.api_url, Arc::clone(&wallet));
     let sol_client = solana_ops::SolanaClient::new(cfg)?;
 
     let spinner = display::spinner("Fetching deployment status...");
@@ -599,8 +607,8 @@ async fn cmd_status(cfg: &config::Config, loan_id: u64) -> Result<()> {
 }
 
 async fn cmd_uploads(cfg: &config::Config) -> Result<()> {
-    let wallet = config::load_keypair(cfg)?;
-    let api = client::DeployerClient::new(&cfg.api_url);
+    let wallet = Arc::new(config::load_keypair(cfg)?);
+    let api = client::DeployerClient::new(&cfg.api_url, Arc::clone(&wallet));
 
     let spinner = display::spinner("Fetching uploads...");
     let uploads = api.get_uploads_by_borrower(&wallet.pubkey().to_string()).await?;
@@ -620,8 +628,8 @@ async fn cmd_uploads(cfg: &config::Config) -> Result<()> {
 }
 
 async fn cmd_loans(cfg: &config::Config) -> Result<()> {
-    let wallet = config::load_keypair(cfg)?;
-    let api = client::DeployerClient::new(&cfg.api_url);
+    let wallet = Arc::new(config::load_keypair(cfg)?);
+    let api = client::DeployerClient::new(&cfg.api_url, Arc::clone(&wallet));
     let sol_client = solana_ops::SolanaClient::new(cfg)?;
 
     let spinner = display::spinner("Fetching deployments...");
@@ -663,7 +671,9 @@ async fn cmd_loans(cfg: &config::Config) -> Result<()> {
 }
 
 async fn cmd_health(cfg: &config::Config) -> Result<()> {
-    let api = client::DeployerClient::new(&cfg.api_url);
+    // `/health` is unauthenticated by design — let users sanity-check the
+    // deployer without needing a keypair on disk.
+    let api = client::DeployerClient::new_anonymous(&cfg.api_url);
 
     let spinner = display::spinner("Checking deployer health...");
     let health = api.health().await?;

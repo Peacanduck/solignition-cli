@@ -1,10 +1,39 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use solana_sdk::signature::Keypair;
 use std::path::PathBuf;
 
 const CONFIG_DIR: &str = ".solignition";
 const CONFIG_FILE: &str = "config.toml";
+
+/// Reject non-HTTPS API URLs unless the host is a loopback address.
+///
+/// The CLI talks to the deployer over a public network; allowing plain HTTP would
+/// leak request bodies (including signed auth headers, file contents, etc.) to any
+/// network observer. Loopback URLs are permitted for local development.
+pub fn validate_api_url(api_url: &str) -> Result<()> {
+    let parsed = url::Url::parse(api_url)
+        .with_context(|| format!("Invalid API URL: {}", api_url))?;
+
+    let scheme = parsed.scheme();
+    if scheme == "https" {
+        return Ok(());
+    }
+
+    if scheme == "http" {
+        let host = parsed.host_str().unwrap_or("");
+        if matches!(host, "localhost" | "127.0.0.1" | "::1") {
+            return Ok(());
+        }
+    }
+
+    Err(anyhow!(
+        "API URL must use HTTPS (got `{}`). Plain HTTP is only allowed for \
+         localhost/127.0.0.1/::1 during local development.",
+        api_url
+    ))
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
@@ -68,6 +97,9 @@ impl Config {
 /// Load a Keypair from the configured path
 pub fn load_keypair(cfg: &Config) -> Result<Keypair> {
     let path = cfg.resolve_keypair_path();
+
+    warn_if_world_readable(&path);
+
     let data = std::fs::read_to_string(&path)
         .with_context(|| format!("Failed to read keypair from: {}", path.display()))?;
 
@@ -75,4 +107,27 @@ pub fn load_keypair(cfg: &Config) -> Result<Keypair> {
         .with_context(|| format!("Invalid keypair JSON at: {}", path.display()))?;
 
     Keypair::try_from(&bytes[..]).context("Invalid keypair bytes")
+}
+
+#[cfg(unix)]
+fn warn_if_world_readable(path: &std::path::Path) {
+    use std::os::unix::fs::PermissionsExt;
+
+    let Ok(meta) = std::fs::metadata(path) else { return };
+    let mode = meta.permissions().mode();
+    if mode & 0o077 != 0 {
+        eprintln!(
+            "{} keypair file `{}` has loose permissions (mode {:o}). Run `chmod 600 {}` to restrict access.",
+            "⚠".yellow().bold(),
+            path.display(),
+            mode & 0o777,
+            path.display(),
+        );
+    }
+}
+
+#[cfg(not(unix))]
+fn warn_if_world_readable(_path: &std::path::Path) {
+    // POSIX permission bits don't have a clean Windows analogue; rely on
+    // user/ACL-level filesystem security there.
 }
