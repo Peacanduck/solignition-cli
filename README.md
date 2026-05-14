@@ -23,9 +23,9 @@ cargo install solignition-cli
 ### npm / yarn
 
 ```bash
-npm install -g solignition
+npm install -g solignition/solignition-cli
 # or
-yarn global add solignition
+yarn global add solignition/solignition-cli
 ```
 
 The npm package ships precompiled binaries for Linux (x64 / arm64), macOS (x64 / arm64), and Windows (x64) — no Rust toolchain required.
