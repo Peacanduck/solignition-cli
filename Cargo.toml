@@ -47,7 +47,7 @@ bs58 = "0.5"
 dirs = "6"
 toml = "0.8"
 colored = "3"
-indicatif = { version = "0.17", features = ["tokio"] }
+indicatif = { version = "0.18", features = ["tokio"] }
 dialoguer = "0.11"
 chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1"
