@@ -1,6 +1,6 @@
 [package]
 name = "solignition-cli"
-version = "1.1.0-rc.0"
+version = "1.1.0"
 edition = "2021"
 description = "CLI tool for deploying Solana programs via the Solignition lending protocol"
 license = "MIT"
